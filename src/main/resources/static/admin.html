@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroCart | Admin Vault</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #020617; --card-bg: #0f172a; --border-color: #1e293b;
+            --primary: #8b5cf6; --primary-hover: #7c3aed; --text-main: #f8fafc;
+            --text-muted: #94a3b8; --success: #10b981; --danger: #ef4444;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
+        
+        /* 🔒 ADMIN VAULT OVERLAY */
+        #adminLock { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .lock-box { background: var(--card-bg); border: 1px solid var(--danger); padding: 40px; border-radius: 16px; width: 380px; text-align: center; box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); }
+        .lock-box h2 { color: var(--danger); margin-top: 0; }
+        .lock-input { width: 100%; padding: 14px; background: #020617; border: 1px solid var(--border-color); color: white; border-radius: 8px; font-size: 15px; margin-bottom: 15px; text-align: center; letter-spacing: 2px; }
+        .lock-btn { width: 100%; background: var(--danger); color: white; font-weight: 700; padding: 14px; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .lock-btn:hover { background: #dc2626; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+
+        /* Main Content */
+        #adminContent { filter: blur(10px); pointer-events: none; transition: filter 0.5s ease; }
+        #adminContent.unlocked { filter: blur(0); pointer-events: all; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { margin: 0; font-size: 26px; } .header span { color: var(--primary); }
+        .nav-btn { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; max-width: 1200px; margin: 0 auto; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card h2 { margin-top: 0; font-size: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; } label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; }
+        input { width: 100%; padding: 12px; background: #020617; border: 1px solid var(--border-color); color: white; border-radius: 6px; outline: none; }
+        button.action-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px;}
+        .revenue-box { text-align: center; padding: 20px; background: rgba(139, 92, 246, 0.1); border: 1px solid var(--primary); border-radius: 12px; margin-bottom: 20px; }
+        .rev-val { font-size: 36px; font-weight: 700; color: var(--primary); }
+        .charts-flex { display: flex; gap: 20px; } .chart-container { flex: 1; height: 250px; position: relative; }
+    </style>
+</head>
+<body>
+
+    <!-- 🔥 ADMIN VAULT LOCK 🔥 -->
+    <div id="adminLock">
+        <div class="lock-box">
+            <h2>🛡️ RESTRICTED AREA</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Admin authorization required.</p>
+            <input type="password" id="masterPass" class="lock-input" placeholder="Master Password">
+            <button class="lock-btn" onclick="verifyAdmin()">Unlock Terminal</button>
+            <div id="lockError" style="color: var(--danger); margin-top: 15px; font-size: 14px; display: none;">Access Denied.</div>
+        </div>
+    </div>
+
+    <!-- MAIN ADMIN CONTENT -->
+    <div id="adminContent">
+        <div class="header">
+            <h1>Aero<span>Cart</span> Admin Center</h1>
+            <a href="/index.html" class="nav-btn">Go to Storefront</a>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>➕ Add New Inventory</h2>
+                <div class="form-group"><label>Product Name</label><input type="text" id="pName" placeholder="e.g. iPhone 15 Pro"></div>
+                <div class="form-group"><label>Category</label><input type="text" id="pCategory" placeholder="e.g. ELECTRONICS"></div>
+                <div class="form-group"><label>Price (₹)</label><input type="number" id="pPrice" placeholder="e.g. 120000"></div>
+                <div class="form-group"><label>Stock Quantity</label><input type="number" id="pStock" placeholder="e.g. 50"></div>
+                <button class="action-btn" onclick="addNewProduct()">Add to Database 🚀</button>
+                <div id="addMsg" style="text-align: center; margin-top: 10px; color: var(--success); font-weight: bold;"></div>
+            </div>
+
+            <div class="card">
+                <h2>📊 Live Sales Analytics</h2>
+                <div class="revenue-box">
+                    <div style="color: var(--text-muted); font-size: 14px; font-weight: 600;">Total Platform Revenue</div>
+                    <div class="rev-val" id="totalRev">₹ 0</div>
+                </div>
+                <div class="charts-flex">
+                    <div class="chart-container"><canvas id="topProductsChart"></canvas></div>
+                    <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:8084/api/admin";
+
+        // MASTER PASSWORD LOGIC (Secret Key: "admin123")
+        function verifyAdmin() {
+            const pass = document.getElementById("masterPass").value;
+            if(pass === "admin123") {
+                document.getElementById("adminLock").style.display = "none";
+                document.getElementById("adminContent").classList.add("unlocked");
+                loadAnalytics(); // Load data only after login
+            } else {
+                document.getElementById("lockError").style.display = "block";
+            }
+        }
+
+        async function addNewProduct() {
+            const name = document.getElementById('pName').value;
+            const category = document.getElementById('pCategory').value;
+            const price = document.getElementById('pPrice').value;
+            const stock = document.getElementById('pStock').value;
+            if(!name || !category || !price || !stock) return alert("Fill all fields!");
+
+            try {
+                const res = await fetch(`${API_BASE}/add-product`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, category: category, price: parseFloat(price), stockQuantity: parseInt(stock) }) });
+                if(res.ok) {
+                    document.getElementById('addMsg').innerText = "✅ Product Added!";
+                    setTimeout(() => { document.getElementById('addMsg').innerText = ""; }, 3000);
+                }
+            } catch (e) { console.error("Error adding product", e); }
+        }
+
+        async function loadAnalytics() {
+            const revRes = await fetch(`${API_BASE}/revenue`);
+            const revData = await revRes.json();
+            document.getElementById('totalRev').innerText = "₹ " + (revData.TOTAL_REVENUE || 0).toLocaleString('en-IN');
+
+            const topRes = await fetch(`${API_BASE}/top-products`);
+            const topData = await topRes.json();
+            new Chart(document.getElementById('topProductsChart'), {
+                type: 'bar',
+                data: { labels: topData.map(d => d.NAME), datasets:[{ label: 'Units Sold', data: topData.map(d => d.TOTAL_SOLD), backgroundColor: '#8b5cf6', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Top 5 Products', color: '#94a3b8' } }, scales: { y: { grid: { color: '#1e293b' } }, x: { grid: { display: false } } } }
+            });
+
+            const catRes = await fetch(`${API_BASE}/category-sales`);
+            const catData = await catRes.json();
+            new Chart(document.getElementById('categoryChart'), {
+                type: 'doughnut',
+                data: { labels: catData.map(d => d.CATEGORY), datasets:[{ data: catData.map(d => d.CATEGORY_SALES), backgroundColor:['#8b5cf6', '#38bdf8', '#10b981', '#f59e0b'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8'} }, title: { display: true, text: 'Revenue by Category', color: '#94a3b8' } } }
+            });
+        }
+    </script>
+</body>
+</html>

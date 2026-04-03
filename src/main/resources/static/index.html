@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroCart | Premium E-Commerce</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #09090b;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --primary: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; min-height: 100vh; background-image: radial-gradient(circle at top center, rgba(56, 189, 248, 0.1), transparent 40%); }
+        
+        /* 🔥 AUTH OVERLAY (The Magic) 🔥 */
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(9, 9, 11, 0.85); backdrop-filter: blur(12px); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .auth-box { background: rgba(15, 23, 42, 0.9); border: 1px solid var(--primary); padding: 40px; border-radius: 16px; width: 380px; text-align: center; box-shadow: 0 0 30px rgba(56, 189, 248, 0.2); }
+        .auth-box h2 { margin-top: 0; color: var(--text-main); font-size: 24px; letter-spacing: -0.5px; }
+        .auth-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
+        .auth-input { width: 100%; padding: 14px; background: #020617; border: 1px solid var(--border-color); color: white; border-radius: 8px; font-size: 15px; margin-bottom: 15px; outline: none; text-align: center; letter-spacing: 1px; }
+        .auth-input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+        .auth-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; padding: 14px; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 15px; text-transform: uppercase; }
+        .auth-btn:hover { background: var(--primary-hover); box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+        .loader-text { color: var(--primary); font-size: 13px; font-weight: 600; margin-top: 15px; display: none; animation: pulse 1s infinite; }
+        @keyframes pulse { 50% { opacity: 0.5; } }
+
+        /* Main Content (Locked initially) */
+        #mainContent { filter: blur(8px); pointer-events: none; transition: filter 0.5s ease; }
+        #mainContent.unlocked { filter: blur(0); pointer-events: all; }
+
+        /* Navbar & UI */
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 50px; border-bottom: 1px solid var(--border-color); background: rgba(9, 9, 11, 0.8); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .logo span { color: var(--primary); }
+        .user-badge { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--primary); color: var(--primary); padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 13px; }
+
+        .hero { text-align: center; padding: 60px 20px 40px; }
+        .hero h1 { font-size: 48px; font-weight: 700; margin: 0 0 15px; letter-spacing: -1px; }
+        .hero p { color: var(--text-muted); font-size: 18px; max-width: 600px; margin: 0 auto; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; margin-top: 40px; }
+        
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; transition: all 0.4s ease; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-10px); border-color: rgba(56, 189, 248, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .category-badge { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text-muted); align-self: flex-start; margin-bottom: 15px; text-transform: uppercase; }
+        .product-name { font-size: 20px; font-weight: 600; margin: 0 0 10px; }
+        .price { font-size: 28px; font-weight: 700; margin-bottom: 20px; }
+        .price span { font-size: 16px; color: var(--text-muted); font-weight: 400; }
+        
+        .stock-info { font-size: 13px; font-weight: 600; margin-bottom: 15px; }
+        .in-stock { color: var(--success); }
+        .out-of-stock { color: var(--danger); }
+        
+        .action-area { display: flex; gap: 10px; margin-top: auto; }
+        .qty-input { width: 70px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: white; border-radius: 8px; text-align: center; outline: none; }
+        .buy-btn { flex: 1; background: var(--text-main); color: var(--bg-color); border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .buy-btn:hover { background: var(--primary); color: white; }
+        .buy-btn:disabled { background: #334155; cursor: not-allowed; }
+
+        /* Toasts */
+        #toast-container { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
+        .toast { background: rgba(15, 23, 42, 0.95); border: 1px solid var(--border-color); padding: 16px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 12px; animation: slideIn 0.4s forwards; }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        @keyframes slideIn { from { transform: translateX(120%); } to { transform: translateX(0); } }
+    </style>
+</head>
+<body>
+
+    <!-- 🔥 THE PREMIUM LOGIN OVERLAY 🔥 -->
+    <div id="authOverlay">
+        <div class="auth-box" id="stepEmail">
+            <h2>🔒 Secure Access</h2>
+            <p>Enter your email to receive a One-Time Password and unlock the store.</p>
+            <input type="email" id="emailInput" class="auth-input" placeholder="e.g. you@gmail.com">
+            <button class="auth-btn" onclick="sendOTP()">Send Magic Link ⚡</button>
+            <div id="emailLoader" class="loader-text">Communicating with servers...</div>
+        </div>
+
+        <div class="auth-box" id="stepOtp" style="display: none;">
+            <h2>🛡️ Verify Identity</h2>
+            <p>We've sent a 6-digit code to your email. Enter it below to proceed.</p>
+            <input type="text" id="otpInput" class="auth-input" placeholder="• • • • • •" maxlength="6">
+            <button class="auth-btn" onclick="verifyOTP()">Verify & Unlock 🔓</button>
+            <div id="otpLoader" class="loader-text">Verifying token...</div>
+        </div>
+    </div>
+
+    <!-- MAIN STOREFRONT (LOCKED INITIALLY) -->
+    <div id="mainContent">
+        <nav class="navbar">
+            <div class="logo">Aero<span>Cart</span></div>
+            <div class="user-badge" id="userBadge">🔒 Not Logged In</div>
+        </nav>
+
+        <div class="hero">
+            <h1>Next-Gen Tech Store</h1>
+            <p>Experience seamless checkout powered by advanced Stored Procedures and secure Email OTP Authentication.</p>
+        </div>
+
+        <div class="container">
+            <div class="grid" id="productGrid"></div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        const API_BASE = "http://localhost:8084/api";
+        let userEmail = "";
+
+        const formatPrice = (price) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
+
+        function showToast(message, isSuccess = true) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${isSuccess ? 'success' : 'error'}`;
+            toast.innerHTML = `<span>${isSuccess ? '✅' : '⚠️'}</span> <div>${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 4000);
+        }
+
+        // 🟢 1. SEND OTP FUNCTION
+        async function sendOTP() {
+            const email = document.getElementById('emailInput').value.trim();
+            if(!email || !email.includes('@')) return alert("Enter a valid email!");
+
+            userEmail = email;
+            document.getElementById('emailLoader').style.display = 'block';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/send-otp`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const data = await res.json();
+                document.getElementById('emailLoader').style.display = 'none';
+
+                if(res.ok) {
+                    showToast("OTP sent to your email!", true);
+                    document.getElementById('stepEmail').style.display = 'none';
+                    document.getElementById('stepOtp').style.display = 'block';
+                }
+            } catch(e) {
+                document.getElementById('emailLoader').style.display = 'none';
+                showToast("Server error. Check backend.", false);
+            }
+        }
+
+        // 🟢 2. VERIFY OTP FUNCTION
+        async function verifyOTP() {
+            const otp = document.getElementById('otpInput').value.trim();
+            if(!otp || otp.length < 6) return alert("Enter 6-digit OTP!");
+
+            document.getElementById('otpLoader').style.display = 'block';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, otp: otp })
+                });
+                
+                const data = await res.json();
+                document.getElementById('otpLoader').style.display = 'none';
+
+                if(data.success) {
+                    showToast("Identity Verified! Welcome.", true);
+                    
+                    // UNLOCK THE STORE! 🔓
+                    document.getElementById('authOverlay').style.display = 'none';
+                    const mainContent = document.getElementById('mainContent');
+                    mainContent.classList.add('unlocked');
+                    
+                    document.getElementById('userBadge').innerText = `👤 ${userEmail}`;
+                    
+                    // Load Products only after login
+                    loadProducts();
+                } else {
+                    showToast("Invalid or expired OTP!", false);
+                }
+            } catch(e) {
+                document.getElementById('otpLoader').style.display = 'none';
+                showToast("Verification failed.", false);
+            }
+        }
+
+        // 🟢 3. LOAD PRODUCTS & PLACE ORDER (Same as before)
+        async function loadProducts() {
+            const response = await fetch(`${API_BASE}/store/products`);
+            const products = await response.json();
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = ''; 
+
+            products.forEach(product => {
+                const isOutOfStock = product.stockQuantity <= 0;
+                const stockClass = isOutOfStock ? 'out-of-stock' : 'in-stock';
+                const btnText = isOutOfStock ? 'Sold Out' : 'Buy Now ⚡';
+
+                grid.innerHTML += `
+                    <div class="card">
+                        <div class="category-badge">${product.category}</div>
+                        <h3 class="product-name">${product.name}</h3>
+                        <div class="price">${formatPrice(product.price)}</div>
+                        <div class="stock-info ${stockClass}">${isOutOfStock ? '❌ Out of Stock' : `📦 ${product.stockQuantity} Available`}</div>
+                        <div class="action-area">
+                            <input type="number" id="qty-${product.productId}" class="qty-input" value="1" min="1" ${isOutOfStock ? 'disabled' : ''}>
+                            <button class="buy-btn" onclick="placeOrder(${product.productId})" ${isOutOfStock ? 'disabled' : ''}>${btnText}</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        async function placeOrder(productId) {
+            const quantity = document.getElementById(`qty-${productId}`).value;
+            // Since customer login is email based, we just pass a dummy customer ID (1) for DB reference
+            const payload = { customerId: 1, productId: parseInt(productId), quantity: parseInt(quantity) };
+
+            const response = await fetch(`${API_BASE}/store/checkout`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            
+            if(data.message.toLowerCase().includes('succesfully')) {
+                showToast(`Success: ${data.message}`, true);
+                loadProducts();
+            } else {
+                showToast(`Failed: ${data.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html>
